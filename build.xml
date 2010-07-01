@@ -1,47 +1,94 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0"?>
+<!-- ant build file for jgit -->
 
-<!-- ====================================================================== -->
-<!-- Ant build file (http://ant.apache.org/) for Ant 1.6.2 or above.        -->
-<!-- ====================================================================== -->
+<project name="MimeUtil" default="dist" basedir=".">
+	<property name="source-version" value="1.5"/>
+	<property name="target-version" value="1.5"/>
+	<property name="build" location="build/"/>
+	<property name="dist" location="dist/"/>
+	<property name="src.mimeutil" location="src/main/java/"/>
 
-<project name="mime-util" default="package" basedir=".">
+	<property name="FreenetLogger.jar.location" location="../foe/FreenetLogger/dist/FreenetLogger.jar"/>
 
-  <!-- ====================================================================== -->
-  <!-- Import maven-build.xml into the current project                        -->
-  <!-- ====================================================================== -->
+	<target name="mkdir">
+		<mkdir dir="${build}"/>
+		<mkdir dir="${dist}"/>
+	</target>
 
-  <import file="maven-build.xml"/>
-  
-  <!-- ====================================================================== -->
-  <!-- Help target                                                            -->
-  <!-- ====================================================================== -->
+	<!-- ================================================== -->
+	<target name="compile" depends="mkdir" >
 
-  <target name="help">
-    <echo message="Please run: $ant -projecthelp"/>
-  </target>
+		<javac srcdir="${src.mimeutil}" destdir="${build}" debug="on" optimize="on" source="${source-version}" target="${target-version}">
+			<include name="**/*.java"/>
+			<exclude name="**/*Test.java"/>
+			<classpath>
+				<pathelement path="${FreenetLogger.jar.location}"/>
+			</classpath>
+		</javac>
 
-  <property name="bnd.version" value="0.0.311"/>
+	</target>
 
-  <target name="get-bnd"
-          depends="test-offline"
-          description="Download BND tool"
-          unless="maven.mode.offline">
-    <mkdir dir="${maven.repo.local}"/>
-    <mkdir dir="${maven.repo.local}/biz/aQute/bnd/${bnd.version}"/>
-    <get src="http://www.aqute.biz/repo/biz/aQute/bnd/${bnd.version}/bnd-${bnd.version}.jar"
-         dest="${maven.repo.local}/biz/aQute/bnd/${bnd.version}/bnd-${bnd.version}.jar"
-         usetimestamp="true"
-         ignoreerrors="true"/>
-  </target>
+	<!-- ================================================== -->
 
-  <target name="package" depends="compile,test,get-bnd" description="Package the bundle">
-    <taskdef resource="aQute/bnd/ant/taskdef.properties">
-      <classpath>
-        <pathelement location="${maven.repo.local}/biz/aQute/bnd/${bnd.version}/bnd-${bnd.version}.jar"/>
-      </classpath>
-    </taskdef>
-    <pathconvert property="bnd.classpath" refid="build.classpath" pathsep=","/>
-    <bnd files="maven-build.bnd" classpath="${maven.build.outputDir},${bnd.classpath}"/>
-  </target>
+	<target name="unit-build" depends="compile" if="junit.present" unless="skip_tests">
+		<javac srcdir="src/" destdir="${build-test}" debug="on" optimize="on" source="1.5">
+			<classpath>
+				<pathelement path="${build}"/>
+				<pathelement location="${freenet-ext.location}"/>
+				<pathelement location="${freenet-cvs-snapshot.location}"/>
+				<pathelement location="${junit.location}"/>
+			</classpath>
+			<compilerarg value="-Xlint"/>
+			<include name="**/*Test.java"/>
+		</javac>
+	</target>
 
+	<target name="junit" depends="unit-build" if="junit.present" unless="skip_tests">
+		<junit printsummary="yes" fork="yes" haltonfailure="yes">
+			<classpath>
+				<pathelement path="${build}"/>
+				<pathelement path="${build-test}"/>
+				<pathelement location="${freenet-ext.location}"/>
+				<pathelement location="${freenet-cvs-snapshot.location}"/>
+				<pathelement location="${junit.location}"/>
+			</classpath>
+
+			<formatter type="plain" usefile="false"/>
+
+			<batchtest fork="yes">
+				<fileset dir="${build-test}">
+					<include name="**/*Test.class"/>
+				</fileset>
+			</batchtest>
+			<sysproperty key="benchmark" value="${benchmark}" />
+			<sysproperty key="extensiveTesting" value="${extensiveTesting}" />
+		</junit>
+	</target>
+
+	<!-- ================================================== -->
+	<target name="dist" depends="compile"
+		description="generate the distribution" >
+		<jar jarfile="${dist}/MimeUtil.jar" duplicate="fail">
+			<manifest>
+				<attribute name="Bundle-ManifestVersion" value="1" />
+				<attribute name="Bundle-Name" value="MimeUtil" />
+				<attribute name="Bundle-SymbolicName" value="org.foo.example.Example" />
+				<attribute name="Bundle-Version" value="0.0.1" />
+				<attribute name="Export-Package" value="eu.medsea.mimeutil,
+					eu.medsea.mimeutil.detector, eu.medsea.mimeutil.handler,
+					eu.medsea.util" />
+				<attribute name="Import-Package" value="freenet.osgi.log"/>
+			</manifest>
+			<fileset dir="${build}/"/>
+			<fileset dir="src/main/resources/">
+				<include name="**/*"/>
+			</fileset>
+		</jar>
+	</target>
+
+	<!-- ================================================== -->
+	<target name="clean" description="Delete class files and docs dir.">
+		<delete dir="${build}"/>
+		<delete dir="${dist}"/>
+	</target>
 </project>
