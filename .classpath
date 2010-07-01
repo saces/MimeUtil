@@ -2,10 +2,10 @@
 <classpath>
 	<classpathentry kind="src" path="src/main/java"/>
 	<classpathentry excluding="**/*.java" kind="src" path="src/main/resources"/>
-	<classpathentry kind="src" output="target/test-classes" path="src/test/java"/>
-	<classpathentry excluding="**/*.java" kind="src" output="target/test-classes" path="src/test/resources"/>
+	<classpathentry kind="src" output="build-test" path="src/test/java"/>
+	<classpathentry excluding="**/*.java" kind="src" output="build-test" path="src/test/resources"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/FreenetLogger"/>
-	<classpathentry kind="output" path="target/classes"/>
+	<classpathentry kind="output" path="build"/>
 </classpath>
