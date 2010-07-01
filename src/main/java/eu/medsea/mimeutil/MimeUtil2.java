@@ -34,13 +34,11 @@ import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.util.zip.ZipException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import eu.medsea.mimeutil.detector.MimeDetector;
 import eu.medsea.util.EncodingGuesser;
 import eu.medsea.util.StringUtil;
 import eu.medsea.util.ZipJarUtil;
+import freenet.log.Logger;
 
 /**
  * <p>
@@ -98,8 +96,11 @@ import eu.medsea.util.ZipJarUtil;
  *
  */
 public class MimeUtil2 {
-	private static Logger log = LoggerFactory.getLogger(MimeUtil2.class);
+	private static volatile boolean logDEBUG;
 
+	static {
+		Logger.registerClass(MimeUtil2.class);
+	}
 	/**
 	 * Mime type used to identify a directory
 	 */
@@ -373,11 +374,11 @@ public class MimeUtil2 {
 	{
 		Collection mimeTypes = new MimeTypeHashSet();
 		if(data == null) {
-			log.error("byte array cannot be null.");
+			Logger.error(this, "byte array cannot be null.");
 		} else {
-			if(log.isDebugEnabled()) {
+			if(logDEBUG) {
 				try {
-					log.debug("Getting MIME types for byte array [" + StringUtil.getHexString(data)+ "].");
+					Logger.debug(this, "Getting MIME types for byte array [" + StringUtil.getHexString(data)+ "].");
 				}catch(UnsupportedEncodingException e) {
 					throw new MimeException(e);
 				}
@@ -392,8 +393,8 @@ public class MimeUtil2 {
 		if(mimeTypes.isEmpty()) {
 			mimeTypes.add(unknownMimeType);
 		}
-		if(log.isDebugEnabled()) {
-			log.debug("Retrieved MIME types [" + mimeTypes.toString() + "]");
+		if(logDEBUG) {
+			Logger.debug(this, "Retrieved MIME types [" + mimeTypes.toString() + "]");
 		}
 		return mimeTypes;
 	}
@@ -430,11 +431,11 @@ public class MimeUtil2 {
 		Collection mimeTypes = new MimeTypeHashSet();
 
 		if(file == null) {
-			log.error("File reference cannot be null.");
+			Logger.error(this, "File reference cannot be null.");
 		} else {
 
-			if(log.isDebugEnabled()) {
-				log.debug("Getting MIME types for file [" + file.getAbsolutePath() + "].");
+			if(logDEBUG) {
+				Logger.debug(this, "Getting MIME types for file [" + file.getAbsolutePath() + "].");
 			}
 
 			if(file.isDirectory()) {
@@ -451,8 +452,8 @@ public class MimeUtil2 {
 		if(mimeTypes.isEmpty()) {
 			mimeTypes.add(unknownMimeType);
 		}
-		if(log.isDebugEnabled()) {
-			log.debug("Retrieved MIME types [" + mimeTypes.toString() + "]");
+		if(logDEBUG) {
+			Logger.debug(this, "Retrieved MIME types [" + mimeTypes.toString() + "]");
 		}
 		return mimeTypes;
 	}
@@ -489,13 +490,13 @@ public class MimeUtil2 {
 		Collection mimeTypes = new MimeTypeHashSet();
 
 		if(in == null) {
-			log.error("InputStream reference cannot be null.");
+			Logger.error(this, "InputStream reference cannot be null.");
 		} else {
 			if (!in.markSupported()) {
 				throw new MimeException("InputStream must support the mark() and reset() methods.");
 			}
-			if(log.isDebugEnabled()) {
-				log.debug("Getting MIME types for InputSteam [" + in + "].");
+			if(logDEBUG) {
+				Logger.debug(this, "Getting MIME types for InputSteam [" + in + "].");
 			}
 			mimeTypes.addAll(mimeDetectorRegistry.getMimeTypes(in));
 
@@ -506,8 +507,8 @@ public class MimeUtil2 {
 		if(mimeTypes.isEmpty()) {
 			mimeTypes.add(unknownMimeType);
 		}
-		if(log.isDebugEnabled()) {
-			log.debug("Retrieved MIME types [" + mimeTypes.toString() + "]");
+		if(logDEBUG) {
+			Logger.debug(this, "Retrieved MIME types [" + mimeTypes.toString() + "]");
 		}
 		return mimeTypes;
 	}
@@ -544,10 +545,10 @@ public class MimeUtil2 {
 		Collection mimeTypes = new MimeTypeHashSet();
 
 		if(fileName == null) {
-			log.error("fileName cannot be null.");
+			Logger.error(this, "fileName cannot be null.");
 		} else {
-			if(log.isDebugEnabled()) {
-				log.debug("Getting MIME types for file name [" + fileName + "].");
+			if(logDEBUG) {
+				Logger.debug(this, "Getting MIME types for file name [" + fileName + "].");
 			}
 
 			// Test if this is a directory
@@ -566,8 +567,8 @@ public class MimeUtil2 {
 		if(mimeTypes.isEmpty()) {
 			mimeTypes.add(unknownMimeType);
 		}
-		if(log.isDebugEnabled()) {
-			log.debug("Retrieved MIME types [" + mimeTypes.toString() + "]");
+		if(logDEBUG) {
+			Logger.debug(this, "Retrieved MIME types [" + mimeTypes.toString() + "]");
 		}
 		return mimeTypes;
 
@@ -593,10 +594,10 @@ public class MimeUtil2 {
 		Collection mimeTypes = new MimeTypeHashSet();
 
 		if(url == null) {
-			log.error("URL reference cannot be null.");
+			Logger.error(this, "URL reference cannot be null.");
 		} else {
-			if(log.isDebugEnabled()) {
-				log.debug("Getting MIME types for URL [" + url + "].");
+			if(logDEBUG) {
+				Logger.debug(this, "Getting MIME types for URL [" + url + "].");
 			}
 
 			// Test if this is a directory
@@ -615,8 +616,8 @@ public class MimeUtil2 {
 		if(mimeTypes.isEmpty()) {
 			mimeTypes.add(unknownMimeType);
 		}
-		if(log.isDebugEnabled()) {
-			log.debug("Retrieved MIME types [" + mimeTypes.toString() + "]");
+		if(logDEBUG) {
+			Logger.debug(this, "Retrieved MIME types [" + mimeTypes.toString() + "]");
 		}
 		return mimeTypes;
 	}
@@ -937,9 +938,11 @@ public class MimeUtil2 {
  *
  */
 class MimeDetectorRegistry {
+	private static volatile boolean logDEBUG;
 
-	private static Logger log = LoggerFactory.getLogger(MimeDetectorRegistry.class);
-
+	static {
+		Logger.registerClass(MimeUtil2.class);
+	}
 	/**
 	 * This property holds an instance of the TextMimeDetector.
 	 * This is the only pre-registerd MimeDetector and cannot be
@@ -959,20 +962,20 @@ class MimeDetectorRegistry {
 	 */
 	MimeDetector registerMimeDetector(final String mimeDetector) {
 		if(mimeDetectors.containsKey(mimeDetector)) {
-			log.warn("MimeDetector [" + mimeDetector + "] will not be registered as a MimeDetector with this name is already registered.");
+			Logger.warning(this, "MimeDetector [" + mimeDetector + "] will not be registered as a MimeDetector with this name is already registered.");
 			return (MimeDetector)mimeDetectors.get(mimeDetector);
 		}
 		// Create the mime detector if we can
 		try {
 			MimeDetector md = (MimeDetector)Class.forName(mimeDetector).newInstance();
 			md.init();
-			if(log.isDebugEnabled()) {
-				log.debug("Registering MimeDetector with name [" + md.getName() + "] and description [" + md.getDescription() + "]");
+			if(logDEBUG) {
+				Logger.debug(this, "Registering MimeDetector with name [" + md.getName() + "] and description [" + md.getDescription() + "]");
 			}
 			mimeDetectors.put(mimeDetector, md);
 			return md;
 		}catch(Exception e) {
-			log.error("Exception while registering MimeDetector [" + mimeDetector + "].", e);
+			Logger.error(this, "Exception while registering MimeDetector [" + mimeDetector + "].", e);
 		}
 		// Failed to create an instance
 		return null;
@@ -1001,7 +1004,7 @@ class MimeDetectorRegistry {
 				// We ignore this as it indicates that this MimeDetector does not support
 				// Getting mime types from files
 			}catch(Exception e) {
-				log.error(e.getLocalizedMessage(), e);
+				Logger.error(this, e.getLocalizedMessage(), e);
 			}
 		}
 		return mimeTypes;
@@ -1028,7 +1031,7 @@ class MimeDetectorRegistry {
 				// We ignore this as it indicates that this MimeDetector does not support
 				// Getting mime types from streams
 			}catch(Exception e) {
-				log.error(e.getLocalizedMessage(), e);
+				Logger.error(this, e.getLocalizedMessage(), e);
 			}
 		}
 		return mimeTypes;
@@ -1053,7 +1056,7 @@ class MimeDetectorRegistry {
 				// We ignore this as it indicates that this MimeDetector does not support
 				// Getting mime types from streams
 			}catch(Exception e) {
-				log.error(e.getLocalizedMessage(), e);
+				Logger.error(this, e.getLocalizedMessage(), e);
 			}
 		}
 		return mimeTypes;
@@ -1078,7 +1081,7 @@ class MimeDetectorRegistry {
 				// We ignore this as it indicates that this MimeDetector does not support
 				// Getting mime types from streams
 			}catch(Exception e) {
-				log.error(e.getLocalizedMessage(), e);
+				Logger.error(this, e.getLocalizedMessage(), e);
 			}
 		}
 		return mimeTypes;
@@ -1103,7 +1106,7 @@ class MimeDetectorRegistry {
 				// We ignore this as it indicates that this MimeDetector does not support
 				// Getting mime types from streams
 			}catch(Exception e) {
-				log.error(e.getLocalizedMessage(), e);
+				Logger.error(this, e.getLocalizedMessage(), e);
 			}
 		}
 		return mimeTypes;
@@ -1113,8 +1116,8 @@ class MimeDetectorRegistry {
 		if(mimeDetector == null) {
 			return null;
 		}
-		if(log.isDebugEnabled()) {
-			log.debug("Unregistering MimeDetector [" + mimeDetector + "] from registry.");
+		if(logDEBUG) {
+			Logger.debug(this, "Unregistering MimeDetector [" + mimeDetector + "] from registry.");
 		}
 		try {
 			MimeDetector md = (MimeDetector)mimeDetectors.get(mimeDetector);
@@ -1123,7 +1126,7 @@ class MimeDetectorRegistry {
 				return (MimeDetector)mimeDetectors.remove(mimeDetector);
 			}
 		}catch(Exception e) {
-			log.error("Exception while un-registering MimeDetector [" + mimeDetector + "].", e);
+			Logger.error(this, "Exception while un-registering MimeDetector [" + mimeDetector + "].", e);
 		}
 
 		// Shouldn't get here

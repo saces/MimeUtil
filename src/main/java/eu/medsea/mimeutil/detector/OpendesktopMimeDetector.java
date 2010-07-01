@@ -36,12 +36,10 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import eu.medsea.mimeutil.MimeException;
 import eu.medsea.mimeutil.MimeType;
 import eu.medsea.mimeutil.MimeUtil;
+import freenet.log.Logger;
 
 /**
  * <p>
@@ -75,9 +73,11 @@ import eu.medsea.mimeutil.MimeUtil;
  * @author Steven McArdle
  */
 public class OpendesktopMimeDetector extends MimeDetector {
+	private static volatile boolean logDEBUG;
 
-	private static Logger log = LoggerFactory
-			.getLogger(OpendesktopMimeDetector.class);
+	static {
+		Logger.registerClass(OpendesktopMimeDetector.class);
+	}
 
 	private static String mimeCacheFile = "/usr/share/mime/mime.cache";
 	private static String internalMimeCacheFile = "src/main/resources/mime.cache";
@@ -111,8 +111,8 @@ public class OpendesktopMimeDetector extends MimeDetector {
 			// Read all of the MIME type from the Alias list
 			initMimeTypes();
 
-			if (log.isDebugEnabled()) {
-				log.debug("Registering a FileWatcher for [" + cacheFile + "]");
+			if (logDEBUG) {
+				Logger.debug(this, "Registering a FileWatcher for [" + cacheFile + "]");
 			}
 			TimerTask task = new FileWatcher(new File(cacheFile)) {
 				protected void onChange(File file) {
@@ -131,7 +131,7 @@ public class OpendesktopMimeDetector extends MimeDetector {
 				try {
 					rCh.close();
 				} catch (Exception e) {
-					log.error(e.getLocalizedMessage(), e);
+					Logger.error(this, e.getLocalizedMessage(), e);
 				}
 			}
 		}
@@ -709,7 +709,7 @@ public class OpendesktopMimeDetector extends MimeDetector {
 		try {
 			return new FileInputStream(file);
 		} catch (Exception e) {
-			log.error("Error getting InputStream for file ["
+			Logger.error(this, "Error getting InputStream for file ["
 					+ file.getAbsolutePath() + "]", e);
 		}
 		return null;

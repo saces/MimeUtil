@@ -31,12 +31,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import eu.medsea.mimeutil.detector.MimeDetector;
 import eu.medsea.mimeutil.handler.TextMimeHandler;
 import eu.medsea.util.EncodingGuesser;
+import freenet.log.Logger;
 
 /**
  * This MimeDetector cannot be registered, unregistered or subclassed.
@@ -97,9 +95,11 @@ import eu.medsea.util.EncodingGuesser;
  *
  */
 public final class TextMimeDetector extends MimeDetector {
+	private static volatile boolean logDEBUG;
 
-	private static Logger log = LoggerFactory.getLogger(TextMimeDetector.class);
-
+	static {
+		Logger.registerClass(TextMimeDetector.class);
+	}
 	// The maximum amount of data to retrieve from a stream
 	private static final int BUFFER_SIZE = 1024;
 
@@ -157,7 +157,7 @@ public final class TextMimeDetector extends MimeDetector {
 			try {
 				in.close();
 			}catch(Exception ignore) {
-				log.error(ignore.getLocalizedMessage());
+				Logger.error(this, ignore.getLocalizedMessage());
 			}
 		}
 	}
@@ -184,7 +184,7 @@ public final class TextMimeDetector extends MimeDetector {
 			try {
 				in.close();
 			}catch(Exception ignore) {
-				log.error(ignore.getLocalizedMessage());
+				Logger.error(this, ignore.getLocalizedMessage());
 			}
 		}
 	}
@@ -250,8 +250,8 @@ public final class TextMimeDetector extends MimeDetector {
 		Collection mimeTypes = new ArrayList();
 
 		Collection possibleEncodings = EncodingGuesser.getPossibleEncodings(data);
-		if(log.isDebugEnabled()) {
-			log.debug("Possible encodings [" + possibleEncodings.size() + "] " + possibleEncodings);
+		if(logDEBUG) {
+			Logger.debug(this, "Possible encodings [" + possibleEncodings.size() + "] " + possibleEncodings);
 		}
 
 		if(possibleEncodings.isEmpty()) {
@@ -312,8 +312,8 @@ public final class TextMimeDetector extends MimeDetector {
 	 */
 	public static void setPreferredEncodings(String [] encodings) {
 		TextMimeDetector.preferredEncodings = EncodingGuesser.getValidEncodings(encodings);
-		if(log.isDebugEnabled()) {
-			log.debug("Preferred Encodings set to " + TextMimeDetector.preferredEncodings);
+		if(logDEBUG) {
+			Logger.debug(TextMimeDetector.class, "Preferred Encodings set to " + TextMimeDetector.preferredEncodings);
 		}
 	}
 

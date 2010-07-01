@@ -36,11 +36,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import eu.medsea.mimeutil.MimeException;
 import eu.medsea.mimeutil.MimeUtil;
+import freenet.log.Logger;
 
 /**
  * The magic mime rules files are loaded in the following way.
@@ -142,7 +140,11 @@ import eu.medsea.mimeutil.MimeUtil;
  */
 public class MagicMimeMimeDetector extends MimeDetector {
 
-	private static Logger log = LoggerFactory.getLogger(MagicMimeMimeDetector.class);
+	private static volatile boolean logDEBUG;
+
+	static {
+		Logger.registerClass(MagicMimeMimeDetector.class);
+	}
 
 	// Having the defaultLocations as protected allows you to subclass this class
 	// and add different paths or remove them all so that the internal file is always used
@@ -181,7 +183,7 @@ public class MagicMimeMimeDetector extends MimeDetector {
 				}
 			}
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
+			Logger.error(this, e.getMessage(), e);
 		}
 		return mimeTypes;
 	}
@@ -213,7 +215,7 @@ public class MagicMimeMimeDetector extends MimeDetector {
 				}
 			}
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
+			Logger.error(this, e.getMessage(), e);
 		}
 		return mimeTypes;
 	}
@@ -280,7 +282,7 @@ public class MagicMimeMimeDetector extends MimeDetector {
 				}
 			}
 		} catch (Exception e) {
-			log.error("Failed to parse custom magic mime file defined by system property -Dmagic-mime ["
+			Logger.error(MagicMimeMimeDetector.class, "Failed to parse custom magic mime file defined by system property -Dmagic-mime ["
 					+ System.getProperty("magic-mime")
 					+ "]. File will be ignored.", e);
 		} finally {
@@ -299,14 +301,14 @@ public class MagicMimeMimeDetector extends MimeDetector {
 					try {
 						parse("classpath:[" + url + "]", new InputStreamReader(in));
 					} catch(Exception ex) {
-						log.error("Failed to parse magic.mime rule file [" + url + "] on the classpath. File will be ignored.",
+						Logger.error(MagicMimeMimeDetector.class, "Failed to parse magic.mime rule file [" + url + "] on the classpath. File will be ignored.",
 							ex);
 					}
 				}
 
 			}
 		}catch(Exception e) {
-			log.error("Problem while processing magic.mime files from classpath. Files will be ignored.", e);
+			Logger.error(MagicMimeMimeDetector.class, "Problem while processing magic.mime files from classpath. Files will be ignored.", e);
 		} finally {
 			in = closeStream(in);
 		}
@@ -322,12 +324,12 @@ public class MagicMimeMimeDetector extends MimeDetector {
 					try {
 						parse(f.getAbsolutePath(), new InputStreamReader(in));
 					} catch(Exception ex) {
-						log.error("Failed to parse .magic.mime file from the users home directory. File will be ignored.", ex);
+						Logger.error(MagicMimeMimeDetector.class, "Failed to parse .magic.mime file from the users home directory. File will be ignored.", ex);
 					}
 				}
 			}
 		}catch(Exception e) {
-			log.error("Problem while processing .magic.mime file from the users home directory. File will be ignored.", e);
+			Logger.error(MagicMimeMimeDetector.class, "Problem while processing .magic.mime file from the users home directory. File will be ignored.", e);
 		} finally {
 			in = closeStream(in);
 		}
@@ -355,13 +357,13 @@ public class MagicMimeMimeDetector extends MimeDetector {
 							parse(f.getAbsolutePath(),
 									new InputStreamReader(in));
 						}catch(Exception ex) {
-							log.error("Failed to parse magic.mime file from directory located by environment variable MAGIC. File will be ignored.", ex);
+							Logger.error(MagicMimeMimeDetector.class, "Failed to parse magic.mime file from directory located by environment variable MAGIC. File will be ignored.", ex);
 						}
 					}
 				}
 			}
 		} catch (Exception e) {
-			log.error("Problem while processing magic.mime file from directory located by environment variable MAGIC. File will be ignored.", e);
+			Logger.error(MagicMimeMimeDetector.class, "Problem while processing magic.mime file from directory located by environment variable MAGIC. File will be ignored.", e);
 		} finally {
 			in = closeStream(in);
 		}
@@ -388,11 +390,11 @@ public class MagicMimeMimeDetector extends MimeDetector {
 					try {
 						parse("resource:" + resource, new InputStreamReader(in));
 					}catch(Exception ex) {
-						log.error("Failed to parse internal magic.mime file.", ex);
+						Logger.error(MagicMimeMimeDetector.class, "Failed to parse internal magic.mime file.", ex);
 					}
 				}
 			} catch (Exception e) {
-				log.error("Problem while processing internal magic.mime file.", e);
+				Logger.error(MagicMimeMimeDetector.class, "Problem while processing internal magic.mime file.", e);
 			} finally {
 				in = closeStream(in);
 			}
@@ -412,11 +414,11 @@ public class MagicMimeMimeDetector extends MimeDetector {
 					try {
 						parse(f.getAbsolutePath(), new InputStreamReader(is));
 					}catch(Exception e) {
-						log.error("Failed to parse " + f.getName() + ". File will be ignored.");
+						Logger.error(MagicMimeMimeDetector.class, "Failed to parse " + f.getName() + ". File will be ignored.");
 					}
 				}
 			} catch (Exception e) {
-				log.error(e.getMessage(), e);
+				Logger.error(MagicMimeMimeDetector.class, e.getMessage(), e);
 			} finally {
 				is = closeStream(is);
 			}
@@ -520,8 +522,8 @@ public class MagicMimeMimeDetector extends MimeDetector {
 			addEntry(magicFile, lineNumber, sequence);
 		}
 
-		if (log.isDebugEnabled())
-			log.debug("Parsing \"" + magicFile + "\" took "
+		if (logDEBUG)
+			Logger.debug(MagicMimeMimeDetector.class, "Parsing \"" + magicFile + "\" took "
 					+ (System.currentTimeMillis() - start) + " msec.");
 	}
 
@@ -537,7 +539,7 @@ public class MagicMimeMimeDetector extends MimeDetector {
 		} catch (InvalidMagicMimeEntryException e) {
 			// Continue on but lets print an exception so people can see there
 			// is a problem
-			log.warn(e.getClass().getName() + ": " + e.getMessage()
+			Logger.warning(MagicMimeMimeDetector.class, e.getClass().getName() + ": " + e.getMessage()
 					+ ": file \"" + magicFile + "\": before or at line "
 					+ lineNumber, e);
 		}

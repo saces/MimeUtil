@@ -26,12 +26,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import eu.medsea.mimeutil.MimeException;
 import eu.medsea.mimeutil.MimeType;
 import eu.medsea.mimeutil.MimeUtil;
+import freenet.log.Logger;
 
 /**
  * <p>
@@ -94,8 +92,11 @@ import eu.medsea.mimeutil.MimeUtil;
  *
  */
 public class ExtensionMimeDetector extends MimeDetector {
+	private static volatile boolean logDEBUG;
 
-	private static Logger log = LoggerFactory.getLogger(ExtensionMimeDetector.class);
+	static {
+		Logger.registerClass(ExtensionMimeDetector.class);
+	}
 
 	// Extension MimeTypes
 	private static Map extMimeTypes;
@@ -199,7 +200,7 @@ public class ExtensionMimeDetector extends MimeDetector {
 				}
 			}catch (Exception e) {
 				// log the error but don't throw the exception up the stack
-				log.error("Error loading internal mime-types.properties", e);
+				Logger.error(ExtensionMimeDetector.class, "Error loading internal mime-types.properties", e);
 			}finally {
 				is = closeStream(is);
 			}
@@ -211,17 +212,17 @@ public class ExtensionMimeDetector extends MimeDetector {
 				if (f.exists()) {
 					is = new FileInputStream(f);
 					if (is != null) {
-						log.debug("Found a custom .mime-types.properties file in the users home directory.");
+						Logger.debug(ExtensionMimeDetector.class, "Found a custom .mime-types.properties file in the users home directory.");
 						Properties props = new Properties();
 						props.load(is);
 						if (props.size() > 0) {
 							extMimeTypes.putAll(props);
 						}
-						log.debug("Successfully parsed .mime-types.properties from users home directory.");
+						Logger.debug(ExtensionMimeDetector.class, "Successfully parsed .mime-types.properties from users home directory.");
 					}
 				}
 			} catch (Exception e) {
-				log.error("Failed to parse .magic.mime file from users home directory. File will be ignored.",e);
+				Logger.error(ExtensionMimeDetector.class, "Failed to parse .magic.mime file from users home directory. File will be ignored.",e);
 			} finally {
 				is = closeStream(is);
 			}
@@ -233,8 +234,8 @@ public class ExtensionMimeDetector extends MimeDetector {
 				Enumeration e = MimeUtil.class.getClassLoader().getResources("mime-types.properties");
 				while(e.hasMoreElements()) {
 					URL url = (URL)e.nextElement();
-					if(log.isDebugEnabled()) {
-						log.debug("Found custom mime-types.properties file on the classpath [" + url + "].");
+					if(logDEBUG) {
+						Logger.debug(ExtensionMimeDetector.class, "Found custom mime-types.properties file on the classpath [" + url + "].");
 					}
 					Properties props = new Properties();
 					try {
@@ -243,17 +244,17 @@ public class ExtensionMimeDetector extends MimeDetector {
 							props.load(is);
 							if(props.size() > 0) {
 								extMimeTypes.putAll(props);
-								if(log.isDebugEnabled()) {
-									log.debug("Successfully loaded custome mime-type.properties file [" + url + "] from classpath.");
+								if(logDEBUG) {
+									Logger.debug(ExtensionMimeDetector.class, "Successfully loaded custome mime-type.properties file [" + url + "] from classpath.");
 								}
 							}
 						}
 					}catch(Exception ex) {
-						log.error("Failed while loading custom mime-type.properties file [" + url + "] from classpath. File will be ignored.");
+						Logger.error(ExtensionMimeDetector.class, "Failed while loading custom mime-type.properties file [" + url + "] from classpath. File will be ignored.");
 					}
 				}
 			}catch(Exception e) {
-				log.error("Problem while processing mime-types.properties files(s) from classpath. Files will be ignored.", e);
+				Logger.error(ExtensionMimeDetector.class, "Problem while processing mime-types.properties files(s) from classpath. Files will be ignored.", e);
 			} finally {
 				is = closeStream(is);
 			}
@@ -265,8 +266,8 @@ public class ExtensionMimeDetector extends MimeDetector {
 				if (fname != null && fname.length() != 0) {
 					is = new FileInputStream(fname);
 					if (is != null) {
-						if (log.isDebugEnabled()) {
-							log.debug("Found a custom mime-mappings property defined by the property -Dmime-mappings ["
+						if (logDEBUG) {
+							Logger.debug(ExtensionMimeDetector.class, "Found a custom mime-mappings property defined by the property -Dmime-mappings ["
 								+ System.getProperty("mime-mappings") + "].");
 						}
 						Properties props = new Properties();
@@ -274,12 +275,12 @@ public class ExtensionMimeDetector extends MimeDetector {
 						if (props.size() > 0) {
 							extMimeTypes.putAll(props);
 						}
-						log.debug("Successfully loaded the mime mappings file from property -Dmime-mappings ["
+						Logger.debug(ExtensionMimeDetector.class, "Successfully loaded the mime mappings file from property -Dmime-mappings ["
 								+ System.getProperty("mime-mappings") + "].");
 					}
 				}
 			} catch (Exception ex) {
-				log.error("Failed to load the mime-mappings file defined by the property -Dmime-mappings ["
+				Logger.error(ExtensionMimeDetector.class, "Failed to load the mime-mappings file defined by the property -Dmime-mappings ["
 						+ System.getProperty("mime-mappings") + "].");
 			} finally {
 				is = closeStream(is);

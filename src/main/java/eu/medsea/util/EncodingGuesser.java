@@ -25,10 +25,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeSet;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-
+import freenet.log.Logger;
 
 /**
  * This class contains a list of known encodings used by TextMimeType.
@@ -73,7 +70,7 @@ import org.slf4j.LoggerFactory;
 public class EncodingGuesser {
 	private static final long serialVersionUID = -247389882161262839L;
 
-	private static Logger log = LoggerFactory.getLogger(EncodingGuesser.class);
+	private static volatile boolean logDEBUG;
 
 	// We want the CANONICAL name of the default Charset for the JVM.
 	private static String defaultJVMEncoding = Charset.forName(new java.io.OutputStreamWriter(new java.io.ByteArrayOutputStream()).getEncoding()).name();
@@ -90,6 +87,7 @@ public class EncodingGuesser {
 	 * The more you remove the more performant the it will be.
 	 */
 	static {
+		Logger.registerClass(EncodingGuesser.class);
 		// We have this switched off by default. If you want to initialise with all encodings
 		// supported by your JVM the just un-comment the following line
 		// EncodingGuesser.supportedEncodings = getCanonicalEncodingNamesSupportedByJVM();
@@ -186,10 +184,10 @@ public class EncodingGuesser {
 				// This is a possible match.
 				possibleEncodings.add(encoding);
 			}catch(UnsupportedEncodingException uee) {
-				log.error("The encoding [" + encoding + "] is not supported by your JVM.");
+				Logger.error(EncodingGuesser.class, "The encoding [" + encoding + "] is not supported by your JVM.");
 			}catch(Exception e) {
 				// Log the error but carry on with the next encoding
-				log.error(e.getLocalizedMessage(), e);
+				Logger.error(EncodingGuesser.class, e.getLocalizedMessage(), e);
 			}
 		}
 		return possibleEncodings;
@@ -346,8 +344,8 @@ public class EncodingGuesser {
 		for(Iterator it = charSetNames.iterator(); it.hasNext();) {
 			encodings.add((String)it.next());
 		}
-		if(log.isDebugEnabled()) {
-			log.debug("The following [" + encodings.size() + "] encodings will be used: " + encodings);
+		if(logDEBUG) {
+			Logger.debug(EncodingGuesser.class, "The following [" + encodings.size() + "] encodings will be used: " + encodings);
 		}
 		return encodings;
 	}
